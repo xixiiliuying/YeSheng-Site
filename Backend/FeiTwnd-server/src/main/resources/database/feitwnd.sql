@@ -5,10 +5,10 @@
 -- 简历cv.feitwnd.cc
 -- 博客blog.feitwnd.cc
 
-drop database if exists FeiTwnd;
-create database FeiTwnd;
+drop database if exists YeSheng;
+create database YeSheng;
 
-use FeiTwnd;
+use YeSheng;
 
 -- ===========管理端(admin.feitwnd.cc)相关表====================
 -- 管理员表

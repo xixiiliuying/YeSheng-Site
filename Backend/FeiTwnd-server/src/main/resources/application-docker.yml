@@ -21,9 +21,7 @@ spring:
   #数据库连接信息
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    host: ${MYSQL_HOST:mysql}
-    port: ${MYSQL_PORT:3306}
-    database: ${MYSQL_DATABASE:FeiTwnd}
+    url: jdbc:mysql://${MYSQL_HOST:mysql}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:FeiTwnd}?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true
     username: ${MYSQL_USER:feitwnd}
     password: ${MYSQL_PASSWORD}
     # Druid连接池专用配置
@@ -52,6 +50,7 @@ spring:
           starttls:
             enable: true
           connectiontimeout: 5000
+          debug: true
           timeout: 3000
           writetimeout: 5000
 

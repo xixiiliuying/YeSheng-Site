@@ -1,9 +1,9 @@
-# 主站: feitwnd.cc
+# 主站: localhost
 server {
     listen 80;
-    server_name feitwnd.cc;
+    server_name localhost;
 
-    root /var/www/feitwnd.cc/html;
+    root /var/www/localhost/html;
     index index.html;
 
     # 前端静态文件
@@ -31,12 +31,12 @@ server {
     }
 }
 
-# 博客站: blog.feitwnd.cc
+# 博客站: blog.localhost
 server {
     listen 80;
-    server_name blog.feitwnd.cc;
+    server_name blog.localhost;
 
-    root /var/www/blog.feitwnd.cc/html;
+    root /var/www/blog.localhost/html;
     index index.html;
 
     location / {
@@ -77,12 +77,12 @@ server {
     }
 }
 
-# 简历站: cv.feitwnd.cc
+# 简历站: cv.localhost
 server {
     listen 80;
-    server_name cv.feitwnd.cc;
+    server_name cv.localhost;
 
-    root /var/www/cv.feitwnd.cc/html;
+    root /var/www/cv.localhost/html;
     index index.html;
 
     location / {
@@ -107,12 +107,12 @@ server {
     }
 }
 
-# 管理后台: admin.feitwnd.cc
+# 管理后台: admin.localhost
 server {
     listen 80;
-    server_name admin.feitwnd.cc;
+    server_name admin.localhost;
 
-    root /var/www/admin.feitwnd.cc/html;
+    root /var/www/admin.localhost/html;
     index index.html;
 
     location / {

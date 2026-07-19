@@ -4,11 +4,10 @@ FROM maven:3.9-eclipse-temurin-21 AS builder
 WORKDIR /build
 
 # 复制pom文件并下载依赖
-COPY Backend/pom.xml .
+COPY Backend/ ./
 RUN mvn dependency:go-offline -B
 
 # 复制源代码并构建
-COPY Backend/ .
 RUN mvn clean package -DskipTests -B
 
 # 运行阶段

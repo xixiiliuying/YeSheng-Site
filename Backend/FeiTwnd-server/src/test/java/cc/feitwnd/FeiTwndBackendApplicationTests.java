@@ -1,11 +1,17 @@
 package cc.feitwnd;
 
+import cc.feitwnd.service.EmailService;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 class FeiTwndBackendApplicationTests {
+    @Autowired
+    private EmailService emailService;
 
     @Test
     public void testPassword() throws Exception {
@@ -29,4 +35,18 @@ class FeiTwndBackendApplicationTests {
         System.out.println(hexString.toString());
     }
 
+    @Test
+    public void testSendVerifyCodeEmail(){
+        String toEmail = "691360854@qq.com";
+        String verifyCode = "123456";
+
+        System.out.println("Verify Code Email Sent to " + toEmail);
+        try{
+            emailService.sendVerifyCode(toEmail, verifyCode);
+            System.out.println("Verify Code Email Sent to " + toEmail);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Failed to send Verify Code Email to " + toEmail);
+        }
+    }
 }
