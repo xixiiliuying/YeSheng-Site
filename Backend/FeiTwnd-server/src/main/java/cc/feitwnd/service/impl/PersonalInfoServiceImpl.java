@@ -30,13 +30,18 @@ public class PersonalInfoServiceImpl implements PersonalInfoService {
 
     /**
      * 管理端更新个人信息
-     * @param personalInfo
-     */
+     * @param personalInfoDTO
+         */
     @CacheEvict(value = "personalInfo", allEntries = true)
     public void updatePersonalInfo(PersonalInfoDTO personalInfoDTO) {
+        // 先查出已有记录，获取 id
+        PersonalInfo existing = personalInfoMapper.getPersonalInfo();
+        if (existing == null) {
+            return; // 表里没数据，无法更新
+        }
         PersonalInfo personalInfo = new PersonalInfo();
         BeanUtils.copyProperties(personalInfoDTO, personalInfo);
-        // 更新个人信息
+        personalInfo.setId(existing.getId()); // 用已有记录的 id
         personalInfoMapper.updateById(personalInfo);
     }
 
