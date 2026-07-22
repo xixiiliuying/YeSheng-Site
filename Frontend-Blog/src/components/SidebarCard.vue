@@ -177,7 +177,7 @@ const goTag = (slug) => {
             loading="lazy"
           />
         </div>
-        <h3 class="info-name">{{ info.nickname || 'FeiTwnd' }}</h3>
+        <h3 class="info-name">{{ info.nickname || 'YeSheng' }}</h3>
         <p v-if="info.tag" class="info-tag">{{ info.tag }}</p>
         <p v-if="info.location" class="info-location">
           <i class="iconfont icon-position" />

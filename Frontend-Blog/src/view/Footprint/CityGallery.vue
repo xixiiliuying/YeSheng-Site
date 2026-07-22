@@ -68,7 +68,7 @@ watch(lightboxVisible, (v) => {
 
 onMounted(async () => {
   document.documentElement.classList.add('city-gallery-page')
-  document.title = '城市图集 - FeiTwnd'
+  document.title = '城市图集 - YeSheng'
 
   try {
     const [fpRes, imgRes] = await Promise.all([

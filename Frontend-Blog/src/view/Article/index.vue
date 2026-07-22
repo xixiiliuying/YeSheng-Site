@@ -89,7 +89,7 @@ const loadArticle = async (slug) => {
   try {
     const res = await getArticleBySlug(slug)
     article.value = res.data.data
-    document.title = `${article.value.title} - FeiTwnd`
+    document.title = `${article.value.title} - YeSheng`
     // 更新 Hero
     articleTitle.value = article.value.title
     articleCover.value = article.value.coverImage || ''

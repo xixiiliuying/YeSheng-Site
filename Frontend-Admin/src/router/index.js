@@ -150,7 +150,7 @@ router.beforeEach(async (to) => {
     if (!footprintEnabled) return { path: '/dashboard', replace: true }
   }
 
-  document.title = `${to.meta?.title || '管理'} - FeiTwnd管理`
+  document.title = `${to.meta?.title || '管理'} - YeSheng管理`
   return true
 })
 

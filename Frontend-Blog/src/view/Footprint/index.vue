@@ -218,7 +218,7 @@ const initChart = () => {
 
 onMounted(async () => {
   document.documentElement.classList.add('footprint-page')
-  document.title = '足迹 - FeiTwnd'
+  document.title = '足迹 - YeSheng'
 
   await nextTick()
   initChart()

@@ -40,7 +40,7 @@ onMounted(() => {
             <div class="section-body">
               <p>
                 你好，我是
-                <strong>FeiTwnd</strong>，一名喜欢折腾代码的普通计科学生。
+                <strong>YeSheng</strong>，一名喜欢折腾代码的普通计科学生。
               </p>
               <p>
                 江西理工大学计算机科学与技术 24

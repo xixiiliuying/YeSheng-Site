@@ -42,7 +42,7 @@ onMounted(async () => {
         >
       </div>
       <div class="footer-copy">
-        &copy; {{ startYear ? `${startYear}-` : '' }}{{ currentYear }} FeiTwnd.
+        &copy; {{ startYear ? `${startYear}-` : '' }}{{ currentYear }} YeSheng.
         All rights reserved.
       </div>
       <div class="footer-links">

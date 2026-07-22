@@ -150,7 +150,7 @@ const navTo = (item) => {
   <header class="site-header" :class="{ scrolled, dark: themeStore.isDark }">
     <div class="header-inner">
       <div class="header-left">
-        <router-link to="/" class="site-title">FeiTwnd's Blog</router-link>
+        <router-link to="/" class="site-title">YeSheng's Blog</router-link>
         <nav class="nav-desktop">
           <template v-for="item in navItems" :key="item.label">
             <a

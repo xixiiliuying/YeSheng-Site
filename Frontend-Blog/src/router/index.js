@@ -93,7 +93,7 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to) => {
-  document.title = to.meta.title ? `${to.meta.title} - FeiTwnd` : 'FeiTwnd'
+  document.title = to.meta.title ? `${to.meta.title} - YeSheng` : 'YeSheng'
 
   if (to.path.startsWith('/footprint')) {
     if (footprintEnabled === null) {

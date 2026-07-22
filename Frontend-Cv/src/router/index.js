@@ -7,7 +7,7 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: () => import('@/view/Home/index.vue'),
-      meta: { title: 'FeiTwnd的简历' }
+      meta: { title: 'YeSheng的简历' }
     },
     {
       path: '/:pathMatch(.*)*',

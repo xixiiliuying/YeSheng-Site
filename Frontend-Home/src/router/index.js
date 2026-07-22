@@ -8,7 +8,7 @@ const router = createRouter({
       name: 'home',
       component: () => import('@/view/Home/index.vue'),
       meta: {
-        title: 'FeiTwnd | 个人主页'
+        title: 'YeSheng | 个人主页'
       }
     },
     {
