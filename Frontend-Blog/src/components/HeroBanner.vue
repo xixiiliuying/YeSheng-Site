@@ -1,8 +1,8 @@
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useBlogStore } from '@/stores'
-import bgcImg from '@/assets/images/bgc.webp'
+import { getConfigByKey } from '@/api/systemConfig'
 
 const route = useRoute()
 const blogStore = useBlogStore()
@@ -18,9 +18,24 @@ const props = defineProps({
 
 const isHome = computed(() => route.name === 'home')
 
+// 从 system_config 读取 Hero 背景图，key = blog_hero_image
+// 注意：blog 的 axios 拦截器返回完整 response，所以是 res.data.data.configValue
+const heroImage = ref('')
+onMounted(async () => {
+  try {
+    const res = await getConfigByKey('blog_hero_image')
+    if (res?.data?.data?.configValue) {
+      heroImage.value = res.data.data.configValue
+    }
+  } catch {
+    // 没配置就用默认
+  }
+})
+
 const bgImage = computed(() => {
   if (props.coverImage) return props.coverImage
-  return bgcImg
+  if (heroImage.value) return heroImage.value
+  return '/bgc.webp' // 默认兜底
 })
 </script>
 
@@ -77,9 +92,12 @@ const bgImage = computed(() => {
   left: 0;
   right: 0;
   height: 80px;
-  background: linear-gradient(to bottom, transparent, var(--blog-bg));
+  background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.95));
   z-index: 2;
   pointer-events: none;
+}
+html.dark .hero-fade {
+  background: linear-gradient(to bottom, transparent, rgba(24, 24, 24, 0.95));
 }
 .hero-content {
   position: relative;

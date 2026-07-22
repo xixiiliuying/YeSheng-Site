@@ -4,11 +4,13 @@ import { useRoute } from 'vue-router'
 import BlogHeader from '@/components/BlogHeader.vue'
 import BlogFooter from '@/components/BlogFooter.vue'
 import HeroBanner from '@/components/HeroBanner.vue'
-import { useBlogStore, useVisitorStore } from '@/stores'
+import BackgroundMedia from '@/components/BackgroundMedia.vue'
+import { useBlogStore, useVisitorStore, useThemeStore } from '@/stores'
 
 const route = useRoute()
 const blogStore = useBlogStore()
 const visitorStore = useVisitorStore()
+const themeStore = useThemeStore()
 
 /* 暗黑模式检测 */
 const initTheme = () => {
@@ -63,7 +65,8 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="blog-layout">
+  <div class="blog-layout" :class="{ 'has-bg': themeStore.hasBg }">
+    <BackgroundMedia />
     <BlogHeader />
     <HeroBanner
       :cover-image="articleCover"

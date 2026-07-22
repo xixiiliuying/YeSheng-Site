@@ -30,13 +30,26 @@ export const useThemeStore = defineStore(
       mode.value = currentIsDark ? 'light' : 'dark'
     }
 
+    // 动态背景类型: 'image' | 'video'
+    const bgType = ref('image')
+
+    const cycleBg = () => {
+      bgType.value = bgType.value === 'image' ? 'video' : 'image'
+    }
+
+    const bgLabel = computed(() => {
+      return bgType.value === 'image' ? '🖼' : '🎬'
+    })
+
+    const hasBg = computed(() => true)
+
     watch(isDark, applyTheme)
 
-    return { mode, isDark, toggle, applyTheme }
+    return { mode, isDark, toggle, applyTheme, bgType, cycleBg, bgLabel, hasBg }
   },
   {
     persist: {
-      pick: ['mode']
+      pick: ['mode', 'bgType']
     }
   }
 )

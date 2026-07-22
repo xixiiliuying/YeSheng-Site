@@ -576,3 +576,55 @@ html.dark .msg-submit-btn:hover {
     width: 92vw !important;
   }
 }
+
+/* === 动态背景 + 毛玻璃效果 === */
+
+/* 导航栏：不加毛玻璃，保持原样 */
+.has-bg .blog-main {
+  background: transparent !important;
+}
+
+/* 卡片 — 高级半透明毛玻璃 */
+.has-bg .article-card,
+.has-bg .content-card,
+.has-bg .about-card,
+.has-bg .links-card,
+.has-bg .message-card,
+.has-bg .sidebar-card,
+.has-bg .archive-item {
+  background: rgba(255, 255, 255, 0.55) !important;
+  backdrop-filter: blur(10px) saturate(1.2);
+  -webkit-backdrop-filter: blur(10px) saturate(1.2);
+  border: 1px solid rgba(255, 255, 255, 0.35) !important;
+  box-shadow: 0 2px 24px rgba(0, 0, 0, 0.04);
+}
+
+/* 页脚 — 轻度毛玻璃 */
+.has-bg .blog-footer {
+  background: rgba(255, 255, 255, 0.5) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* 暗色模式 */
+html.dark .has-bg .blog-main {
+  background: transparent !important;
+}
+html.dark .has-bg .article-card,
+html.dark .has-bg .content-card,
+html.dark .has-bg .about-card,
+html.dark .has-bg .links-card,
+html.dark .has-bg .message-card,
+html.dark .has-bg .sidebar-card,
+html.dark .has-bg .archive-item {
+  background: rgba(20, 20, 20, 0.6) !important;
+  backdrop-filter: blur(10px) saturate(1.2);
+  -webkit-backdrop-filter: blur(10px) saturate(1.2);
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 2px 24px rgba(0, 0, 0, 0.2);
+}
+html.dark .has-bg .blog-footer {
+  background: rgba(20, 20, 20, 0.55) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}

@@ -274,6 +274,15 @@ const navTo = (item) => {
           </svg>
         </button>
 
+        <!-- 背景切换: 图片 ↔ 视频 -->
+        <button
+          class="theme-toggle"
+          :title="themeStore.bgType === 'image' ? '切换为视频背景' : '切换为图片背景'"
+          @click="themeStore.cycleBg"
+        >
+          {{ themeStore.bgLabel }}
+        </button>
+
         <div class="search-area">
           <div class="search-box" :class="{ expanded: searchVisible }">
             <input
