@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useBlogStore } from '@/stores'
 import { getConfigByKey } from '@/api/systemConfig'
@@ -19,7 +19,6 @@ const props = defineProps({
 const isHome = computed(() => route.name === 'home')
 
 // 从 system_config 读取 Hero 背景图，key = blog_hero_image
-// 注意：blog 的 axios 拦截器返回完整 response，所以是 res.data.data.configValue
 const heroImage = ref('')
 onMounted(async () => {
   try {
@@ -27,15 +26,48 @@ onMounted(async () => {
     if (res?.data?.data?.configValue) {
       heroImage.value = res.data.data.configValue
     }
-  } catch {
-    // 没配置就用默认
-  }
+  } catch { /* ignore */ }
 })
 
 const bgImage = computed(() => {
   if (props.coverImage) return props.coverImage
   if (heroImage.value) return heroImage.value
   return '/bgc.webp' // 默认兜底
+})
+
+/* ---- 打字机效果 ---- */
+const fullDesc = '每天学一点技术，每天长一点脑子。每一步都算数！！'
+const typedDesc = ref('')
+const cursorShow = ref(true)
+let typeTimer = null
+let cursorTimer = null
+
+const startTyping = () => {
+  typedDesc.value = ''
+  let i = 0
+  typeTimer = setInterval(() => {
+    typedDesc.value += fullDesc[i]
+    i++
+    if (i >= fullDesc.length) {
+      clearInterval(typeTimer)
+      typeTimer = null
+    }
+  }, 100) // 每 100ms 打一个字
+}
+
+onMounted(() => {
+  if (isHome.value) {
+    startTyping()
+    // 光标闪烁
+    cursorTimer = setInterval(() => {
+      cursorShow.value = !cursorShow.value
+    }, 530)
+  }
+})
+
+onUnmounted(() => {
+  if (typeTimer) clearInterval(typeTimer)
+  if (cursorTimer) clearInterval(cursorTimer)
 })
 </script>
 
@@ -50,7 +82,7 @@ const bgImage = computed(() => {
           {{ blogStore.personalInfo.nickname }}
         </h1>
         <p class="hero-desc">
-          随便坐坐，看看我写的字 —— 些许技术、心得、生活日常和胡思乱想。
+          {{ typedDesc }}<span class="typing-cursor" :class="{ blink: cursorShow }">|</span>
         </p>
       </template>
       <!-- 自定义标题 (文章/分类/标签等) -->
@@ -121,6 +153,14 @@ html.dark .hero-fade {
   opacity: 0.9;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
   line-height: 1.6;
+}
+.typing-cursor {
+  font-weight: 100;
+  opacity: 1;
+  transition: opacity 0.1s;
+}
+.typing-cursor.blink {
+  opacity: 0;
 }
 .hero-article-title {
   font-family: var(--blog-serif);
