@@ -219,7 +219,7 @@ const totalCount = computed(() => {
 
 onMounted(() => {
   articleTitle.value = '留言板'
-  articleMeta.value = '说点什么吧'
+articleMeta.value = '要有人问才说的话，这个世界未免太过安静！'
   form.value.nickname = visitorStore.nickname || ''
   form.value.emailOrQq = visitorStore.email || ''
   load()
