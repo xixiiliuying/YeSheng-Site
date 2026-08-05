@@ -95,6 +95,12 @@ const router = createRouter({
           meta: { title: '音乐管理' }
         },
         {
+          path: '/moments',
+          name: 'moments',
+          component: () => import('@/view/Moments/index.vue'),
+          meta: { title: '小瞬间管理' }
+        },
+        {
           path: '/rss',
           name: 'rss',
           component: () => import('@/view/Rss/index.vue'),

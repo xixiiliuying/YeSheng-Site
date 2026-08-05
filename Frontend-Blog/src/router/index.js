@@ -57,6 +57,12 @@ const router = createRouter({
           name: 'about',
           component: () => import('@/view/About/index.vue'),
           meta: { title: '关于' }
+        },
+        {
+          path: 'moments',
+          name: 'moments',
+          component: () => import('@/view/Moments/index.vue'),
+          meta: { title: '星空拾光' }
         }
       ]
     },

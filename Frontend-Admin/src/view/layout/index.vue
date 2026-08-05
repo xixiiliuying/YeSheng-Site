@@ -52,6 +52,9 @@ const navItems = computed(() => {
     { path: '/message', icon: 'icon-liuyan', label: '留言管理' },
     { path: '/friend-link', icon: 'icon-link', label: '友链管理' },
     { path: '/music', icon: 'icon-music', label: '音乐管理' },
+    { path: '/moments', icon: 'icon-subway', label: '小瞬间',
+      svg: true
+    },
     { path: '/rss', icon: 'icon-rss', label: 'RSS 订阅' },
     { path: '/visitor', icon: 'icon-user', label: '访客管理' },
     { path: '/view-record', icon: 'icon-eye', label: '浏览记录' }
@@ -96,7 +99,21 @@ const handleLogout = () => {
           :to="item.path"
           :class="['nav-item', { active: activeMenu.startsWith(item.path) }]"
         >
-          <span :class="['iconfont', item.icon]" />
+          <svg
+            v-if="item.svg"
+            viewBox="0 0 24 24"
+            width="18"
+            height="18"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="nav-svg"
+          >
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+          </svg>
+          <span v-else :class="['iconfont', item.icon]" />
           <span v-if="!collapsed" class="nav-label">{{ item.label }}</span>
         </router-link>
       </nav>
@@ -223,6 +240,10 @@ const handleLogout = () => {
 
 .nav-item .iconfont {
   font-size: 18px;
+  flex-shrink: 0;
+}
+
+.nav-svg {
   flex-shrink: 0;
 }
 

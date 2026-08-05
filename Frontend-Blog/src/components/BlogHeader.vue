@@ -100,6 +100,7 @@ const navItems = computed(() => {
     { label: '归档', icon: 'icon-guidang', to: '/archive' },
     { label: '友链', icon: 'icon-lianjie', to: '/links' },
     { label: '留言', icon: 'icon-liuyan', to: '/message' },
+    { label: '拾光', icon: 'icon-subway', to: '/moments' },
     { label: '关于', icon: 'icon-guanyu', to: '/about' },
     {
       label: '开往',
@@ -277,10 +278,40 @@ const navTo = (item) => {
         <!-- 背景切换: 图片 ↔ 视频 -->
         <button
           class="theme-toggle"
-          :title="themeStore.bgType === 'image' ? '切换为视频背景' : '切换为图片背景'"
+          :title="themeStore.bgType === 'image' ? '图片背景，点击切换视频' : '视频背景，点击切换图片'"
           @click="themeStore.cycleBg"
         >
-          {{ themeStore.bgLabel }}
+          <!-- 图片图标 -->
+          <svg
+            v-if="themeStore.bgType === 'image'"
+            viewBox="0 0 24 24"
+            width="17"
+            height="17"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+            <circle cx="8.5" cy="8.5" r="1.5" />
+            <polyline points="21 15 16 10 5 21" />
+          </svg>
+          <!-- 视频图标 -->
+          <svg
+            v-else
+            viewBox="0 0 24 24"
+            width="17"
+            height="17"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <polygon points="23 7 16 12 23 17 23 7" />
+            <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+          </svg>
         </button>
 
         <div class="search-area">
