@@ -8,7 +8,7 @@ services:
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-your_root_password}
-      MYSQL_DATABASE: FeiTwnd
+      MYSQL_DATABASE: YeSheng
       MYSQL_USER: feitwnd
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-your_password}
       TZ: Asia/Shanghai
@@ -60,7 +60,7 @@ services:
       # 数据库配置
       MYSQL_HOST: mysql
       MYSQL_PORT: 3306
-      MYSQL_DATABASE: FeiTwnd
+      MYSQL_DATABASE: YeSheng
       MYSQL_USER: feitwnd
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-your_password}
       # Redis配置

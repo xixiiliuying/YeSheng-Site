@@ -37,15 +37,11 @@ export const useThemeStore = defineStore(
       bgType.value = bgType.value === 'image' ? 'video' : 'image'
     }
 
-    const bgLabel = computed(() => {
-      return bgType.value === 'image' ? '🖼' : '🎬'
-    })
-
     const hasBg = computed(() => true)
 
     watch(isDark, applyTheme)
 
-    return { mode, isDark, toggle, applyTheme, bgType, cycleBg, bgLabel, hasBg }
+    return { mode, isDark, toggle, applyTheme, bgType, cycleBg, hasBg }
   },
   {
     persist: {

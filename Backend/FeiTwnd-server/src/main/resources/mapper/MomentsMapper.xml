@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cc.feitwnd.mapper.MomentsMapper">
+
+    <sql id="voColumns">
+        id, content, emoji, color, tag, nickname, is_approved, create_time
+    </sql>
+
+    <select id="pageQuery" resultType="cc.feitwnd.vo.MomentsVO">
+        SELECT <include refid="voColumns"/>
+        FROM moments
+        <where>
+            <if test="tag != null and tag != ''">AND tag = #{tag}</if>
+            <if test="isApproved != null">AND is_approved = #{isApproved}</if>
+        </where>
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="getById" resultType="cc.feitwnd.vo.MomentsVO">
+        SELECT <include refid="voColumns"/> FROM moments WHERE id = #{id}
+    </select>
+
+    <select id="randomOne" resultType="cc.feitwnd.vo.MomentsVO">
+        SELECT <include refid="voColumns"/>
+        FROM moments
+        WHERE is_visible = 1 AND is_approved = 1
+        ORDER BY RAND() LIMIT 1
+    </select>
+
+    <select id="listApproved" resultType="cc.feitwnd.vo.MomentsVO">
+        SELECT <include refid="voColumns"/>
+        FROM moments
+        WHERE is_visible = 1 AND is_approved = 1
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="listByVisitorId" resultType="cc.feitwnd.vo.MomentsVO">
+        SELECT <include refid="voColumns"/>
+        FROM moments
+        WHERE visitor_id = #{visitorId}
+        ORDER BY create_time DESC
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO moments (content, emoji, color, tag, visitor_id, nickname, is_approved, is_visible, ip, create_time, update_time)
+        VALUES (#{content}, #{emoji}, #{color}, #{tag}, #{visitorId}, #{nickname}, #{isApproved}, #{isVisible}, #{ip}, #{createTime}, #{updateTime})
+    </insert>
+
+    <update id="update">
+        UPDATE moments
+        <set>
+            <if test="content != null">content = #{content},</if>
+            <if test="emoji != null">emoji = #{emoji},</if>
+            <if test="color != null">color = #{color},</if>
+            <if test="tag != null">tag = #{tag},</if>
+            <if test="nickname != null">nickname = #{nickname},</if>
+            <if test="isApproved != null">is_approved = #{isApproved},</if>
+            <if test="isVisible != null">is_visible = #{isVisible},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM moments WHERE id = #{id}
+    </delete>
+
+    <update id="approve">
+        UPDATE moments SET is_approved = #{isApproved}, update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+</mapper>

@@ -1,14 +1,14 @@
--- FeiTwnd个人网站数据库
+-- YeSheng个人网站数据库
 -- 包含四个网站的后端数据库
 -- 主页home.feitwnd.cc
 -- 管理admin.feitwnd.cc
 -- 简历cv.feitwnd.cc
 -- 博客blog.feitwnd.cc
 
-drop database if exists FeiTwnd;
-create database FeiTwnd;
+drop database if exists YeSheng;
+create database YeSheng;
 
-use FeiTwnd;
+use YeSheng;
 
 -- ===========管理端(admin.feitwnd.cc)相关表====================
 -- 管理员表
@@ -373,7 +373,7 @@ create table music(
 -- xxx为需要替换的内容
 
 -- 管理员账号username是登录时用的，nickname是在管理端登录后显示的昵称，盐值用随机字符串就行，不要太简单，这里的密码要插入根据盐值加密后的密码
--- 密码需要到测试类中生成，在/src/test/java/cc/feitwnd/FeiTwndBackendApplicationTests.java
+-- 密码需要到测试类中生成，在/src/test/java/cc/feitwnd/YeShengBackendApplicationTests.java
 -- 运行测试方法会在控制台打印出加密后的密码，将加密后的密码和盐值填入以下插入语句
 -- 邮箱填写自己的邮箱，作为管理端登录验证码的接受邮箱
 insert into admin(username, password, salt, nickname, email, role, create_time, update_time)
