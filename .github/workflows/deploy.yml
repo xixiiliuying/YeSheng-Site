@@ -42,12 +42,22 @@ jobs:
         uses: pnpm/action-setup@v4
         with:
           version: latest
+          cache: true
+          # 罗列所有子项目锁文件路径
+          cache-dependency-path: |
+            Frontend-Home/pnpm-lock.yaml
+            Frontend-Blog/pnpm-lock.yaml
+            Frontend-Cv/pnpm-lock.yaml
+            Frontend-Admin/pnpm-lock.yaml
+
+      - name: 配置国内镜像
+        run: pnpm config set registry https://registry.npmmirror.com
 
       - name: Setup Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
+          # cache: 'pnpm'
           # cache-dependency-path: ${{ matrix.project }}/pnpm-lock.yaml
 
       - name: Install dependencies
