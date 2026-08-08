@@ -136,10 +136,38 @@ jobs:
     # 修正分支判断，main正式部署
     if: github.ref == 'refs/heads/main'
     steps:
-      - name: Download all frontend artifacts
+      # 逐个下载，规避批量下载网络重试失败
+      - name: Download frontend-home
         uses: actions/download-artifact@v4
         with:
-          path: artifacts
+          name: frontend-home
+          path: artifacts/frontend-home
+        env:
+          ACTIONS_RUNNER_DOWNLOAD_TIMEOUT: 300
+
+      - name: Download frontend-blog
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-blog
+          path: artifacts/frontend-blog
+        env:
+          ACTIONS_RUNNER_DOWNLOAD_TIMEOUT: 300
+
+      - name: Download frontend-cv
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-cv
+          path: artifacts/frontend-cv
+        env:
+          ACTIONS_RUNNER_DOWNLOAD_TIMEOUT: 300
+
+      - name: Download frontend-admin
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-admin
+          path: artifacts/frontend-admin
+        env:
+          ACTIONS_RUNNER_DOWNLOAD_TIMEOUT: 300
 
       - name: Show artifact structure
         run: find artifacts -type f | sort
