@@ -38,44 +38,43 @@ jobs:
             domain: admin.imying.top
 
     steps:
-      # 第一步必须拉取代码
       - uses: actions/checkout@v4
-
-      # 第二步 固定Node
-      - name: Setup Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-          # 单个项目独立缓存路径，当前job目录一定存在
-          cache-dependency-path: ${{ matrix.project }}/pnpm-lock.yaml
-
-      # 第三步 安装固定版本pnpm，关闭缓存配置
+    
+      # 1. 优先安装pnpm
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
           version: ${{ env.PNPM_VERSION }}
-      - name: 导入pnpm环境变量
+    
+      # 2. 再安装Node
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache-dependency-path: ${{ matrix.project }}/pnpm-lock.yaml
+    
+      # 刷新环境变量
+      - name: Export pnpm PATH
         run: echo "PATH=$(pnpm env path):$PATH" >> $GITHUB_ENV
-
+    
       - name: 配置国内镜像加速
         run: pnpm config set registry https://registry.npmmirror.com
-
+    
       - name: Install dependencies
         run: |
           cd ${{ matrix.project }}
           pnpm install --frozen-lockfile
-
+    
       - name: Build ${{ matrix.name }}
         run: |
           cd ${{ matrix.project }}
           pnpm build
-
+    
       - name: Package dist
         run: |
           cd ${{ matrix.project }}/dist
           tar czf ../../../${{ matrix.name }}.tar.gz .
-
+    
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
