@@ -62,8 +62,8 @@ jobs:
     
       - name: Install dependencies
         run: |
-          cd ${{ matrix.project }}
-          pnpm install 
+          cd Frontend-Blog
+          pnpm install --ignore-scripts 
     
       - name: Build ${{ matrix.name }}
         run: |
