@@ -3,13 +3,13 @@ name: Build & Deploy
 on:
   push:
     branches:
-      - master
+      - main
       - develop
   workflow_dispatch:
 
 env:
   ALIYUN_REGISTRY: registry.cn-hangzhou.aliyuncs.com
-  ALIYUN_NAMESPACE: feitwnd
+  ALIYUN_NAMESPACE: yeshengg
   NODE_VERSION: '20'
   JAVA_VERSION: '21'
 
