@@ -8,15 +8,17 @@ on:
   workflow_dispatch:
 
 env:
-  ALIYUN_REGISTRY: registry.cn-hangzhou.aliyuncs.com
+  ALIYUN_REGISTRY: crpi-uy6vawv1c8j0xywb.cn-hangzhou.personal.cr.aliyuncs.com
   ALIYUN_NAMESPACE: yeshengg
   NODE_VERSION: '22.13'
+  PNPM_VERSION: '9.15.5'
   JAVA_VERSION: '21'
 
 jobs:
   # ==================== 前端构建 x4（并行） ====================
   build-frontend:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
       max-parallel: 4
       fail-fast: false
@@ -36,29 +38,26 @@ jobs:
             domain: admin.imying.top
 
     steps:
+      # 第一步必须拉取代码
       - uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: latest
-          cache: true
-          # 罗列所有子项目锁文件路径
-          cache_dependency_path: |
-            Frontend-Home/pnpm-lock.yaml
-            Frontend-Blog/pnpm-lock.yaml
-            Frontend-Cv/pnpm-lock.yaml
-            Frontend-Admin/pnpm-lock.yaml
-
-      - name: 配置国内镜像
-        run: pnpm config set registry https://registry.npmmirror.com
-
+      # 第二步 固定Node
       - name: Setup Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          # cache: 'pnpm'
-          # cache-dependency-path: ${{ matrix.project }}/pnpm-lock.yaml
+          cache: 'pnpm'
+          # 单个项目独立缓存路径，当前job目录一定存在
+          cache-dependency-path: ${{ matrix.project }}/pnpm-lock.yaml
+
+      # 第三步 安装固定版本pnpm，关闭缓存配置
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: 配置国内镜像加速
+        run: pnpm config set registry https://registry.npmmirror.com
 
       - name: Install dependencies
         run: |
@@ -85,6 +84,7 @@ jobs:
   # ==================== 后端构建 + Docker 镜像 ====================
   build-backend:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     outputs:
       image_tag: ${{ steps.meta.outputs.short_sha }}
     steps:
@@ -96,6 +96,11 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: 'temurin'
           cache: 'maven'
+
+      - name: Maven阿里云镜像加速
+        run: |
+          mkdir -p ~/.m2
+          echo '<?xml version="1.0"?><settings><mirrors><mirror><id>aliyun</id><mirrorOf>central</mirrorOf><url>https://maven.aliyun.com/repository/public</url></mirror></mirrors></settings>' > ~/.m2/settings.xml
 
       - name: Build with Maven
         run: cd Backend && mvn clean package -DskipTests -B
@@ -125,7 +130,9 @@ jobs:
   deploy:
     needs: [build-backend, build-frontend]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
+    timeout-minutes: 10
+    # 修正分支判断，main正式部署
+    if: github.ref == 'refs/heads/main'
     steps:
       - name: Download all frontend artifacts
         uses: actions/download-artifact@v4
@@ -159,15 +166,17 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_SSH_PORT || 22 }}
           script: |
-            set -e
+            set -euo pipefail
             cd /opt/YeSheng/YeSheng-Site
 
             REGISTRY="registry.cn-hangzhou.aliyuncs.com"
-            NAMESPACE="feitwnd"
+            NAMESPACE="yeshengg"
             IMAGE="${REGISTRY}/${NAMESPACE}/feitwnd-backend:latest"
 
-            # 登录阿里云镜像仓库
-            echo "${{ secrets.ALIYUN_REGISTRY_PASSWORD }}" | docker login --username="${{ secrets.ALIYUN_REGISTRY_USERNAME }}" --password-stdin ${REGISTRY} 2>/dev/null
+            # 自动创建docker网络
+            if ! docker network inspect yesheng-site_feitwnd-network >/dev/null 2>&1; then
+              docker network create yesheng-site_feitwnd-network
+            fi
 
             # ===== 后端 =====
             echo ">>> Updating backend..."
@@ -212,10 +221,10 @@ jobs:
 
             # ===== 前端 =====
             echo ">>> Updating frontend..."
-
             extract() {
               SRC=$1 DST=$2
               if [ -f "${SRC}" ]; then
+                mkdir -p ${DST}
                 rm -rf ${DST}/*
                 tar xzf ${SRC} -C ${DST}/
                 echo "  [OK] $(basename ${DST})"
@@ -230,10 +239,9 @@ jobs:
             extract /tmp/deploy/admin.tar.gz /opt/YeSheng/YeSheng-Site/docker/html/admin.imying.top/html
 
             # ===== Reload Nginx =====
-            docker exec feitwnd-nginx nginx -s reload
-            echo ">>> Nginx reloaded"
+            docker exec feitwnd-nginx nginx -s reload && echo ">>> Nginx reloaded successfully"
 
             # ===== 清理 =====
             docker image prune -a --filter "until=48h" -f
             rm -rf /tmp/deploy/
-            echo ">>> Deploy completed!"
+            echo "✅ Deploy completed!"
