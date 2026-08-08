@@ -63,7 +63,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd ${{ matrix.project }}
-          pnpm install --frozen-lockfile
+          pnpm install 
     
       - name: Build ${{ matrix.name }}
         run: |
