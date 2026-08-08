@@ -55,6 +55,8 @@ jobs:
         uses: pnpm/action-setup@v4
         with:
           version: ${{ env.PNPM_VERSION }}
+      - name: 导入pnpm环境变量
+        run: echo "PATH=$(pnpm env path):$PATH" >> $GITHUB_ENV
 
       - name: 配置国内镜像加速
         run: pnpm config set registry https://registry.npmmirror.com
