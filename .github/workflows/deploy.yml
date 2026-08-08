@@ -19,6 +19,7 @@ jobs:
   build-frontend:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+  
     strategy:
       max-parallel: 4
       fail-fast: false
@@ -27,60 +28,76 @@ jobs:
           - name: home
             project: Frontend-Home
             domain: imying.top
+  
           - name: blog
             project: Frontend-Blog
             domain: blog.imying.top
+  
           - name: cv
             project: Frontend-Cv
             domain: cv.imying.top
+  
           - name: admin
             project: Frontend-Admin
             domain: admin.imying.top
-
+  
     steps:
-      - uses: actions/checkout@v4
-    
-      # 1. 优先安装pnpm
+      - name: Checkout
+        uses: actions/checkout@v4
+  
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
           version: ${{ env.PNPM_VERSION }}
-    
-      # 2. 再安装Node
-      - name: Setup Node.js ${{ env.NODE_VERSION }}
+  
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
           cache-dependency-path: ${{ matrix.project }}/pnpm-lock.yaml
-    
-      # 刷新环境变量
-      - name: Export pnpm PATH
-        run: echo "PATH=$(pnpm env path):$PATH" >> $GITHUB_ENV
-    
-      - name: 配置国内镜像加速
-        run: pnpm config set registry https://registry.npmmirror.com
-    
-      # 【关键修改】统一使用矩阵变量，适配4个不同项目
+  
+      - name: Configure pnpm registry
+        run: |
+          pnpm config set registry https://registry.npmmirror.com
+          pnpm --version
+          node --version
+  
       - name: Install dependencies
+        working-directory: ${{ matrix.project }}
         run: |
-          cd ${{ matrix.project }}
-          pnpm install --ignore-scripts 
-    
+          pnpm install --frozen-lockfile --ignore-scripts
+  
       - name: Build ${{ matrix.name }}
+        working-directory: ${{ matrix.project }}
         run: |
-          cd ${{ matrix.project }}
           pnpm build
-    
+  
+      - name: Verify dist
+        run: |
+          echo "=== ${{ matrix.name }} dist ==="
+          ls -lah "${{ matrix.project }}/dist"
+          test -f "${{ matrix.project }}/dist/index.html"
+  
       - name: Package dist
         run: |
-          cd ${{ matrix.project }}/dist
-          tar czf ../../../${{ matrix.name }}.tar.gz .
-    
+          tar -czf "$GITHUB_WORKSPACE/${{ matrix.name }}.tar.gz" \
+            -C "${{ matrix.project }}/dist" .
+  
+      - name: Verify package
+        run: |
+          echo "=== Package ==="
+          ls -lh "$GITHUB_WORKSPACE/${{ matrix.name }}.tar.gz"
+  
+          echo "=== Package contents ==="
+          tar -tzf "$GITHUB_WORKSPACE/${{ matrix.name }}.tar.gz" | head -30
+  
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: frontend-${{ matrix.name }}
-          path: ${{ matrix.name }}.tar.gz
+          path: ${{ github.workspace }}/${{ matrix.name }}.tar.gz
+          if-no-files-found: error
           retention-days: 1
 
   # ==================== 后端构建 + Docker 镜像 ====================
@@ -197,81 +214,124 @@ jobs:
           port: ${{ secrets.SERVER_SSH_PORT || 22 }}
           script: |
             set -euo pipefail
+      
             cd /opt/YeSheng/YeSheng-Site
-
-            REGISTRY="registry.cn-hangzhou.aliyuncs.com"
+      
+            REGISTRY="crpi-uy6vawv1c8j0xywb.cn-hangzhou.personal.cr.aliyuncs.com"
             NAMESPACE="yeshengg"
-            IMAGE="${REGISTRY}/${NAMESPACE}/feitwnd-backend:latest"
-
-            # 自动创建docker网络
+      
+            IMAGE="${REGISTRY}/${NAMESPACE}/feitwnd-backend:${{ needs.build-backend.outputs.image_tag }}"
+      
+            echo "======================================"
+            echo "Deploying backend:"
+            echo "${IMAGE}"
+            echo "======================================"
+      
+            # ===== ACR Login =====
+            echo "${{ secrets.ALIYUN_REGISTRY_PASSWORD }}" | \
+            docker login \
+              --username "${{ secrets.ALIYUN_REGISTRY_USERNAME }}" \
+              --password-stdin \
+              "${REGISTRY}"
+      
+            # ===== Docker Network =====
             if ! docker network inspect yesheng-site_feitwnd-network >/dev/null 2>&1; then
               docker network create yesheng-site_feitwnd-network
             fi
-
-            # ===== 后端 =====
-            echo ">>> Updating backend..."
-            docker pull ${IMAGE}
-
-            PULLED_ID=$(docker inspect ${IMAGE} --format='{{.Id}}' 2>/dev/null || echo "")
-            RUNNING_ID=$(docker inspect feitwnd-backend --format='{{.Image}}' 2>/dev/null || echo "")
-
-            if [ "${RUNNING_ID}" != "${PULLED_ID}" ]; then
-              echo ">>> Image changed, restarting backend..."
-              docker stop feitwnd-backend 2>/dev/null || true
-              docker rm feitwnd-backend 2>/dev/null || true
-              docker run -d \
-                --name feitwnd-backend \
-                --restart always \
-                --network yesheng-site_feitwnd-network \
-                -e SPRING_PROFILES_ACTIVE=docker \
-                -e TZ=Asia/Shanghai \
-                -e MYSQL_HOST=feitwnd-mysql \
-                -e MYSQL_PORT=3306 \
-                -e MYSQL_DATABASE=YeSheng \
-                -e MYSQL_USER=feitwnd \
-                -e MYSQL_PASSWORD='${{ secrets.MYSQL_PASSWORD }}' \
-                -e REDIS_HOST=feitwnd-redis \
-                -e REDIS_PORT=6379 \
-                -e REDIS_PASSWORD='${{ secrets.REDIS_PASSWORD }}' \
-                -e JWT_SECRET_KEY='${{ secrets.JWT_SECRET_KEY }}' \
-                -e ALIOSS_ENDPOINT='${{ secrets.ALIOSS_ENDPOINT }}' \
-                -e ALIOSS_ACCESS_KEY_ID='${{ secrets.ALIOSS_ACCESS_KEY_ID }}' \
-                -e ALIOSS_ACCESS_KEY_SECRET='${{ secrets.ALIOSS_ACCESS_KEY_SECRET }}' \
-                -e ALIOSS_BUCKET_NAME='${{ secrets.ALIOSS_BUCKET_NAME }}' \
-                -e MAIL_HOST='${{ secrets.MAIL_HOST }}' \
-                -e MAIL_PORT='${{ secrets.MAIL_PORT }}' \
-                -e MAIL_USERNAME='${{ secrets.MAIL_USERNAME }}' \
-                -e MAIL_PASSWORD='${{ secrets.MAIL_PASSWORD }}' \
-                -e JWT_TTL='${{ secrets.JWT_TTL }}' \
-                -v /opt/YeSheng/YeSheng-Site/docker/app/logs:/app/logs \
-                ${IMAGE}
-            else
-              echo ">>> Backend unchanged, skipped."
+      
+            # ===== Backend =====
+            echo ">>> Pulling backend image..."
+            docker pull "${IMAGE}"
+      
+            echo ">>> Restarting backend..."
+      
+            docker stop feitwnd-backend 2>/dev/null || true
+            docker rm feitwnd-backend 2>/dev/null || true
+      
+            docker run -d \
+              --name feitwnd-backend \
+              --restart always \
+              --network yesheng-site_feitwnd-network \
+              -e SPRING_PROFILES_ACTIVE=docker \
+              -e TZ=Asia/Shanghai \
+              -e MYSQL_HOST=feitwnd-mysql \
+              -e MYSQL_PORT=3306 \
+              -e MYSQL_DATABASE=YeSheng \
+              -e MYSQL_USER=feitwnd \
+              -e MYSQL_PASSWORD='${{ secrets.MYSQL_PASSWORD }}' \
+              -e REDIS_HOST=feitwnd-redis \
+              -e REDIS_PORT=6379 \
+              -e REDIS_PASSWORD='${{ secrets.REDIS_PASSWORD }}' \
+              -e JWT_SECRET_KEY='${{ secrets.JWT_SECRET_KEY }}' \
+              -e ALIOSS_ENDPOINT='${{ secrets.ALIOSS_ENDPOINT }}' \
+              -e ALIOSS_ACCESS_KEY_ID='${{ secrets.ALIOSS_ACCESS_KEY_ID }}' \
+              -e ALIOSS_ACCESS_KEY_SECRET='${{ secrets.ALIOSS_ACCESS_KEY_SECRET }}' \
+              -e ALIOSS_BUCKET_NAME='${{ secrets.ALIOSS_BUCKET_NAME }}' \
+              -e MAIL_HOST='${{ secrets.MAIL_HOST }}' \
+              -e MAIL_PORT='${{ secrets.MAIL_PORT }}' \
+              -e MAIL_USERNAME='${{ secrets.MAIL_USERNAME }}' \
+              -e MAIL_PASSWORD='${{ secrets.MAIL_PASSWORD }}' \
+              -e JWT_TTL='${{ secrets.JWT_TTL }}' \
+              -v /opt/YeSheng/YeSheng-Site/docker/app/logs:/app/logs \
+              "${IMAGE}"
+      
+            # ===== Backend Health =====
+            echo ">>> Checking backend container..."
+            sleep 5
+      
+            if ! docker ps --format '{{.Names}}' | grep -q '^feitwnd-backend$'; then
+              echo "Backend container failed to start!"
+              docker logs feitwnd-backend --tail 100
+              exit 1
             fi
-
-            # ===== 前端 =====
+      
+            echo ">>> Backend started successfully"
+      
+            # ===== Frontend =====
             echo ">>> Updating frontend..."
+      
             extract() {
-              SRC=$1 DST=$2
-              if [ -f "${SRC}" ]; then
-                mkdir -p ${DST}
-                rm -rf ${DST}/*
-                tar xzf ${SRC} -C ${DST}/
-                echo "  [OK] $(basename ${DST})"
-              else
-                echo "  [SKIP] ${SRC} not found"
+              SRC="$1"
+              DST="$2"
+      
+              if [ ! -f "${SRC}" ]; then
+                echo "[ERROR] Artifact not found: ${SRC}"
+                exit 1
               fi
+      
+              mkdir -p "${DST}"
+              rm -rf "${DST:?}"/*
+              tar xzf "${SRC}" -C "${DST}/"
+      
+              echo "[OK] $(basename "${DST}")"
             }
-
-            extract /tmp/deploy/home.tar.gz  /opt/YeSheng/YeSheng-Site/docker/html/imying.top/html
-            extract /tmp/deploy/blog.tar.gz  /opt/YeSheng/YeSheng-Site/docker/html/blog.imying.top/html
-            extract /tmp/deploy/cv.tar.gz    /opt/YeSheng/YeSheng-Site/docker/html/cv.imying.top/html
-            extract /tmp/deploy/admin.tar.gz /opt/YeSheng/YeSheng-Site/docker/html/admin.imying.top/html
-
-            # ===== Reload Nginx =====
-            docker exec feitwnd-nginx nginx -s reload && echo ">>> Nginx reloaded successfully"
-
-            # ===== 清理 =====
-            docker image prune -a --filter "until=48h" -f
+      
+            extract \
+              /tmp/deploy/home.tar.gz \
+              /opt/YeSheng/YeSheng-Site/docker/html/imying.top/html
+      
+            extract \
+              /tmp/deploy/blog.tar.gz \
+              /opt/YeSheng/YeSheng-Site/docker/html/blog.imying.top/html
+      
+            extract \
+              /tmp/deploy/cv.tar.gz \
+              /opt/YeSheng/YeSheng-Site/docker/html/cv.imying.top/html
+      
+            extract \
+              /tmp/deploy/admin.tar.gz \
+              /opt/YeSheng/YeSheng-Site/docker/html/admin.imying.top/html
+      
+            # ===== Nginx =====
+            echo ">>> Checking nginx configuration..."
+            docker exec feitwnd-nginx nginx -t
+      
+            echo ">>> Reloading nginx..."
+            docker exec feitwnd-nginx nginx -s reload
+      
+            # ===== Cleanup =====
             rm -rf /tmp/deploy/
-            echo "✅ Deploy completed!"
+      
+            echo "======================================"
+            echo "✅ Deploy completed successfully!"
+            echo "======================================"
