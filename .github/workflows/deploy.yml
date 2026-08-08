@@ -60,9 +60,10 @@ jobs:
       - name: 配置国内镜像加速
         run: pnpm config set registry https://registry.npmmirror.com
     
+      # 【关键修改】统一使用矩阵变量，适配4个不同项目
       - name: Install dependencies
         run: |
-          cd Frontend-Blog
+          cd ${{ matrix.project }}
           pnpm install --ignore-scripts 
     
       - name: Build ${{ matrix.name }}
