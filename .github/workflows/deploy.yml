@@ -44,7 +44,7 @@ jobs:
           version: latest
           cache: true
           # 罗列所有子项目锁文件路径
-          cache-dependency-path: |
+          cache_dependency_path: |
             Frontend-Home/pnpm-lock.yaml
             Frontend-Blog/pnpm-lock.yaml
             Frontend-Cv/pnpm-lock.yaml
