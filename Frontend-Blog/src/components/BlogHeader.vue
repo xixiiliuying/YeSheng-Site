@@ -93,7 +93,7 @@ const navItems = computed(() => {
     {
       label: '主页',
       icon: 'icon-zhuye',
-      href: 'http://localhost:5173/',
+      href: 'https://imying.top/',
       external: true
     },
     { label: '博客', icon: 'icon-boke', to: '/' },
