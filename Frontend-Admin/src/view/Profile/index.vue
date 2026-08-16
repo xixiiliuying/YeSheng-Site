@@ -133,9 +133,15 @@ const openExpDialog = (row = null) => {
 
 const handleExpSave = async () => {
   if (!expForm.value.title.trim()) return ElMessage.warning('标题不能为空')
+  if (!expForm.value.content?.trim()) return ElMessage.warning('内容不能为空')
+  if (!expForm.value.startDate) return ElMessage.warning('请选择开始时间')
   expSaving.value = true
   try {
-    await profileStore.saveExperience({ ...expForm.value })
+    await profileStore.saveExperience({
+      ...expForm.value,
+      startDate: expForm.value.startDate || null,
+      endDate: expForm.value.endDate || null
+    })
     ElMessage.success(expEditing.value ? '修改成功' : '创建成功')
     expDialogVisible.value = false
     loadExperiences()
@@ -607,17 +613,23 @@ onMounted(() => {
           />
         </el-form-item>
         <el-form-item label="开始时间" required>
-          <el-input
+          <el-date-picker
             v-model="expForm.startDate"
-            placeholder="如：2022-07"
+            type="month"
+            value-format="YYYY-MM-DD"
+            placeholder="选择开始月份"
             clearable
+            style="width: 100%"
           />
         </el-form-item>
         <el-form-item label="结束时间">
-          <el-input
+          <el-date-picker
             v-model="expForm.endDate"
-            placeholder="如：2024-06，留空表示至今"
+            type="month"
+            value-format="YYYY-MM-DD"
+            placeholder="选择结束月份，留空表示至今"
             clearable
+            style="width: 100%"
           />
         </el-form-item>
         <el-form-item label="内容" required>
