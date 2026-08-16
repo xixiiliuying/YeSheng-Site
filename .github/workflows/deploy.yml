@@ -1,0 +1,229 @@
+name: Build & Deploy
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+  workflow_dispatch:
+
+env:
+  ALIYUN_REGISTRY: registry.cn-hangzhou.aliyuncs.com
+  ALIYUN_NAMESPACE: feitwnd
+  NODE_VERSION: '20'
+  JAVA_VERSION: '21'
+
+jobs:
+  # ==================== 前端构建 x4（并行） ====================
+  build-frontend:
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+      fail-fast: false
+      matrix:
+        include:
+          - name: home
+            project: Frontend-Home
+            domain: imying.top
+          - name: blog
+            project: Frontend-Blog
+            domain: blog.imying.top
+          - name: cv
+            project: Frontend-Cv
+            domain: cv.imying.top
+          - name: admin
+            project: Frontend-Admin
+            domain: admin.imying.top
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+          cache-dependency-path: ${{ matrix.project }}/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: |
+          cd ${{ matrix.project }}
+          pnpm install --frozen-lockfile
+
+      - name: Build ${{ matrix.name }}
+        run: |
+          cd ${{ matrix.project }}
+          pnpm build
+
+      - name: Package dist
+        run: |
+          cd ${{ matrix.project }}/dist
+          tar czf ../../../${{ matrix.name }}.tar.gz .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-${{ matrix.name }}
+          path: ${{ matrix.name }}.tar.gz
+          retention-days: 1
+
+  # ==================== 后端构建 + Docker 镜像 ====================
+  build-backend:
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.meta.outputs.short_sha }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build with Maven
+        run: cd Backend && mvn clean package -DskipTests -B
+
+      - name: Get short SHA
+        id: meta
+        run: echo "short_sha=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_OUTPUT
+
+      - name: Login to Alibaba Cloud Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.ALIYUN_REGISTRY }}
+          username: ${{ secrets.ALIYUN_REGISTRY_USERNAME }}
+          password: ${{ secrets.ALIYUN_REGISTRY_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ env.ALIYUN_REGISTRY }}/${{ env.ALIYUN_NAMESPACE }}/feitwnd-backend:latest
+            ${{ env.ALIYUN_REGISTRY }}/${{ env.ALIYUN_NAMESPACE }}/feitwnd-backend:${{ steps.meta.outputs.short_sha }}
+
+  # ==================== 部署到服务器 ====================
+  deploy:
+    needs: [build-backend, build-frontend]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - name: Download all frontend artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Show artifact structure
+        run: find artifacts -type f | sort
+
+      - name: Copy frontend to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: root
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_SSH_PORT || 22 }}
+          source: |
+            artifacts/frontend-home/home.tar.gz
+            artifacts/frontend-blog/blog.tar.gz
+            artifacts/frontend-cv/cv.tar.gz
+            artifacts/frontend-admin/admin.tar.gz
+          target: /tmp/deploy/
+          strip_components: 1
+          rm: true
+
+      - name: Deploy on server
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: root
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_SSH_PORT || 22 }}
+          script: |
+            set -e
+            cd /opt/YeSheng/YeSheng-Site
+
+            REGISTRY="registry.cn-hangzhou.aliyuncs.com"
+            NAMESPACE="feitwnd"
+            IMAGE="${REGISTRY}/${NAMESPACE}/feitwnd-backend:latest"
+
+            # 登录阿里云镜像仓库
+            echo "${{ secrets.ALIYUN_REGISTRY_PASSWORD }}" | docker login --username="${{ secrets.ALIYUN_REGISTRY_USERNAME }}" --password-stdin ${REGISTRY} 2>/dev/null
+
+            # ===== 后端 =====
+            echo ">>> Updating backend..."
+            docker pull ${IMAGE}
+
+            PULLED_ID=$(docker inspect ${IMAGE} --format='{{.Id}}' 2>/dev/null || echo "")
+            RUNNING_ID=$(docker inspect feitwnd-backend --format='{{.Image}}' 2>/dev/null || echo "")
+
+            if [ "${RUNNING_ID}" != "${PULLED_ID}" ]; then
+              echo ">>> Image changed, restarting backend..."
+              docker stop feitwnd-backend 2>/dev/null || true
+              docker rm feitwnd-backend 2>/dev/null || true
+              docker run -d \
+                --name feitwnd-backend \
+                --restart always \
+                --network yesheng-site_feitwnd-network \
+                -e SPRING_PROFILES_ACTIVE=docker \
+                -e TZ=Asia/Shanghai \
+                -e MYSQL_HOST=feitwnd-mysql \
+                -e MYSQL_PORT=3306 \
+                -e MYSQL_DATABASE=YeSheng \
+                -e MYSQL_USER=feitwnd \
+                -e MYSQL_PASSWORD='${{ secrets.MYSQL_PASSWORD }}' \
+                -e REDIS_HOST=feitwnd-redis \
+                -e REDIS_PORT=6379 \
+                -e REDIS_PASSWORD='${{ secrets.REDIS_PASSWORD }}' \
+                -e JWT_SECRET_KEY='${{ secrets.JWT_SECRET_KEY }}' \
+                -e ALIOSS_ENDPOINT='${{ secrets.ALIOSS_ENDPOINT }}' \
+                -e ALIOSS_ACCESS_KEY_ID='${{ secrets.ALIOSS_ACCESS_KEY_ID }}' \
+                -e ALIOSS_ACCESS_KEY_SECRET='${{ secrets.ALIOSS_ACCESS_KEY_SECRET }}' \
+                -e ALIOSS_BUCKET_NAME='${{ secrets.ALIOSS_BUCKET_NAME }}' \
+                -e MAIL_HOST='${{ secrets.MAIL_HOST }}' \
+                -e MAIL_PORT='${{ secrets.MAIL_PORT }}' \
+                -e MAIL_USERNAME='${{ secrets.MAIL_USERNAME }}' \
+                -e MAIL_PASSWORD='${{ secrets.MAIL_PASSWORD }}' \
+                -e JWT_TTL='${{ secrets.JWT_TTL }}' \
+                -v /opt/YeSheng/YeSheng-Site/docker/app/logs:/app/logs \
+                ${IMAGE}
+            else
+              echo ">>> Backend unchanged, skipped."
+            fi
+
+            # ===== 前端 =====
+            echo ">>> Updating frontend..."
+
+            extract() {
+              SRC=$1 DST=$2
+              if [ -f "${SRC}" ]; then
+                rm -rf ${DST}/*
+                tar xzf ${SRC} -C ${DST}/
+                echo "  [OK] $(basename ${DST})"
+              else
+                echo "  [SKIP] ${SRC} not found"
+              fi
+            }
+
+            extract /tmp/deploy/home.tar.gz  /opt/YeSheng/YeSheng-Site/docker/html/imying.top/html
+            extract /tmp/deploy/blog.tar.gz  /opt/YeSheng/YeSheng-Site/docker/html/blog.imying.top/html
+            extract /tmp/deploy/cv.tar.gz    /opt/YeSheng/YeSheng-Site/docker/html/cv.imying.top/html
+            extract /tmp/deploy/admin.tar.gz /opt/YeSheng/YeSheng-Site/docker/html/admin.imying.top/html
+
+            # ===== Reload Nginx =====
+            docker exec feitwnd-nginx nginx -s reload
+            echo ">>> Nginx reloaded"
+
+            # ===== 清理 =====
+            docker image prune -a --filter "until=48h" -f
+            rm -rf /tmp/deploy/
+            echo ">>> Deploy completed!"
