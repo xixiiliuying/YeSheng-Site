@@ -254,8 +254,19 @@ const fanStyle = (i) => {
 }
 
 const handlePublish = async () => {
-  if (!publishForm.value.content.trim()) return
-  try { await submitMoment({ content:publishForm.value.content, emoji:publishForm.value.emoji, nickname:publishForm.value.nickname||visitorStore.nickname||'匿名' }); publishForm.value={content:'',emoji:'💬',nickname:''}; showPublish.value=false; ElMessage.success('已提交 ✨') } catch{}
+  if (!publishForm.value.content.trim()) { ElMessage.warning('先写点内容再提交吧'); return }
+  try {
+    await submitMoment(
+      { content: publishForm.value.content, emoji: publishForm.value.emoji, nickname: publishForm.value.nickname || visitorStore.nickname || '匿名' },
+      visitorStore.visitorToken,
+      visitorStore.fingerprint
+    )
+    publishForm.value = { content: '', emoji: '💬', nickname: '' }
+    showPublish.value = false
+    ElMessage.success('已提交，等待审核 ✨')
+  } catch (e) {
+    ElMessage.error(e?.msg || '提交失败，请稍后重试')
+  }
 }
 
 const mouseMove = (e) => {

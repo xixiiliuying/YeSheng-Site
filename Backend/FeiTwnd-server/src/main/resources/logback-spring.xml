@@ -106,6 +106,49 @@
 
     </springProfile>
 
+    <!-- ==================== Docker 生产环境：控制台 + 文件 ==================== -->
+    <springProfile name="docker">
+
+        <!-- 主应用日志文件（挂载到宿主机 docker/app/logs） -->
+        <appender name="APPLICATION_FILE_DOCKER" class="ch.qos.logback.core.rolling.RollingFileAppender">
+            <file>/app/logs/${APP_NAME}-application.log</file>
+            <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+                <fileNamePattern>/app/logs/${APP_NAME}-application-%d{yyyy-MM-dd}-%i.log</fileNamePattern>
+                <maxHistory>${MAX_HISTORY}</maxHistory>
+                <maxFileSize>${MAX_FILE_SIZE}</maxFileSize>
+                <totalSizeCap>${TOTAL_SIZE_CAP}</totalSizeCap>
+            </rollingPolicy>
+            <encoder>
+                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{ip:-}] %-5level %logger{36} - %msg%n</pattern>
+            </encoder>
+        </appender>
+
+        <!-- 错误日志单独文件 -->
+        <appender name="ERROR_FILE_DOCKER" class="ch.qos.logback.core.rolling.RollingFileAppender">
+            <file>/app/logs/${APP_NAME}-error.log</file>
+            <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+                <level>ERROR</level>
+            </filter>
+            <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+                <fileNamePattern>/app/logs/${APP_NAME}-error-%d{yyyy-MM-dd}-%i.log</fileNamePattern>
+                <maxHistory>30</maxHistory>
+                <maxFileSize>10MB</maxFileSize>
+                <totalSizeCap>500MB</totalSizeCap>
+            </rollingPolicy>
+            <encoder>
+                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{ip:-}] %-5level %logger{36} - %msg%n</pattern>
+            </encoder>
+        </appender>
+
+        <!-- 根日志 -->
+        <root level="INFO">
+            <appender-ref ref="CONSOLE" />
+            <appender-ref ref="APPLICATION_FILE_DOCKER" />
+            <appender-ref ref="ERROR_FILE_DOCKER" />
+        </root>
+
+    </springProfile>
+
     <!-- ==================== 开发环境：仅控制台 ==================== -->
     <springProfile name="dev">
 

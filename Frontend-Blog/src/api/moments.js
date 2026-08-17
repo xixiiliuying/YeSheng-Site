@@ -7,7 +7,19 @@ export const getRandomMoment = () => request.get('/blog/moments/random')
 export const getMomentsList = () => request.get('/blog/moments')
 
 /** 访客发布 */
-export const submitMoment = (data) => request.post('/blog/moments', data)
+export const submitMoment = (data, visitorToken, visitorFingerprint) =>
+  request.post('/blog/moments', data, {
+    headers: {
+      'X-Visitor-Token': visitorToken || '',
+      'X-Visitor-Fingerprint': visitorFingerprint || ''
+    }
+  })
 
 /** 我的投稿 */
-export const getMyMoments = () => request.get('/blog/moments/my')
+export const getMyMoments = (visitorToken, visitorFingerprint) =>
+  request.get('/blog/moments/my', {
+    headers: {
+      'X-Visitor-Token': visitorToken || '',
+      'X-Visitor-Fingerprint': visitorFingerprint || ''
+    }
+  })

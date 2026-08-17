@@ -14,6 +14,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -48,6 +49,8 @@ public class MomentsServiceImpl implements MomentsService {
         if (dto.getColor() == null || dto.getColor().isEmpty()) {
             m.setColor(COLORS[(int) (Math.random() * COLORS.length)]);
         }
+        m.setCreateTime(LocalDateTime.now());
+        m.setUpdateTime(LocalDateTime.now());
         momentsMapper.insert(m);
     }
 
@@ -55,6 +58,7 @@ public class MomentsServiceImpl implements MomentsService {
     public void update(MomentsDTO dto) {
         Moments m = new Moments();
         BeanUtils.copyProperties(dto, m);
+        m.setUpdateTime(LocalDateTime.now());
         momentsMapper.update(m);
     }
 
@@ -89,6 +93,8 @@ public class MomentsServiceImpl implements MomentsService {
         m.setIsApproved(0); // 待审核
         m.setIsVisible(1);
         m.setColor(COLORS[(int) (Math.random() * COLORS.length)]);
+        m.setCreateTime(LocalDateTime.now());
+        m.setUpdateTime(LocalDateTime.now());
         momentsMapper.insert(m);
     }
 
