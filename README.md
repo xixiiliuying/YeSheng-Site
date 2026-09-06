@@ -8,11 +8,11 @@
   <img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="License">
 </p>
 
-# FeiTwnd — 个人全栈网站
+# 个人全栈网站
 
 一套基于 **Spring Boot 3 + Vue 3** 的个人网站全栈解决方案，包含博客、后台管理、个人主页、在线简历四个子站点和一个统一后端服务。
 
-> 在线演示：[blog.feitwnd.cc](https://blog.feitwnd.cc) · [feitwnd.cc](https://feitwnd.cc) · [cv.feitwnd.cc](https://cv.feitwnd.cc)
+> 在线演示：[blog.imying.top](https://blog.imying.top) · [imying.top](https://imying.top) · [cv.imying.top](https://cv.imying.imying.top)
 
 ---
 
@@ -158,8 +158,7 @@ FeiTwnd/
 ### 1. 克隆项目
 
 ```bash
-git clone https://github.com/FeiTwnd/FeiTwnd-Website.git
-cd FeiTwnd
+git clone xxx.git
 ```
 
 ### 2. 初始化数据库
